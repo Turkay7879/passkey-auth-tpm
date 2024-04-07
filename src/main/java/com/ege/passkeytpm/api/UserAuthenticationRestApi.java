@@ -1,0 +1,51 @@
+package com.ege.passkeytpm.api;
+
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ege.passkeytpm.core.api.AuthenticationService;
+import com.ege.passkeytpm.core.api.UserService;
+import com.ege.passkeytpm.core.impl.pojo.UserImpl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+
+@RestController
+@RequestMapping("/userAuth")
+public class UserAuthenticationRestApi {
+    private final Logger logger = LoggerFactory.getLogger(UserAuthenticationRestApi.class);
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AuthenticationService authenticationService;
+    
+    @PostMapping("/registerUser")
+    public ResponseEntity<Object> registerUser(@RequestBody UserImpl user) {
+        try {
+            UserImpl savedUser = userService.save(user);
+            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error with saving user", e);
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody UserImpl user) {
+        try {
+            String result = authenticationService.authUserWithPassword(user);
+            return new ResponseEntity<>(result, result == "OK" ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            logger.error("Error with saving user", e);
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

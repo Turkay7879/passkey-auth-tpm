@@ -1,10 +1,9 @@
 package com.ege.passkeytpm.core.impl.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+import com.ege.passkeytpm.core.impl.pojo.UserPasskeyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,7 @@ public class UserServiceImpl implements UserService {
         UserImpl user2Check = new UserImpl();
         user2Check.setMail(user.getMail());
         List<UserImpl> resultList = search(user2Check, true);
-        if (!resultList.isEmpty()) {
+        if (!resultList.isEmpty() && user.getDbId() == null) {
             logger.error("A user with email \"{}\" exists", user2Check.getMail());
             throw new Exception("A user with email \"%s\" exists".formatted(user2Check.getMail()));
         }
@@ -155,5 +154,44 @@ public class UserServiceImpl implements UserService {
         }
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public UserImpl assignPasskeyToUser(UserImpl user) throws Exception {
+        if (user == null || !StringUtils.hasText(user.getId())) {
+            throw new IllegalArgumentException("User to assign passkey cannot be null or have empty id!");
+        }
+
+        UserImpl userInDB = new UserImpl();
+        userInDB.setId(user.getId());
+        List<UserImpl> result = search(userInDB, true);
+
+        if (result.isEmpty()) {
+            throw new IllegalArgumentException("No user found with id %s!".formatted(user.getId()));
+        }
+
+        Set<UserPasskeyImpl> userPasskeys = user.getPasskeys();
+        if (userPasskeys == null || userPasskeys.isEmpty()) {
+            throw new IllegalArgumentException("There are no passkeys provided for user to assign!");
+        } else if (userPasskeys.size() > 1) {
+            throw new IllegalArgumentException("Only 1 passkey can be assigned at a time!");
+        }
+
+        userInDB = result.get(0);
+        UserPasskeyImpl passkey = userPasskeys.iterator().next();
+
+        UserPasskeyImpl passkey2Save = new UserPasskeyImpl();
+        passkey2Save.setUser(userInDB);
+        passkey2Save.setCreatedAt(LocalDateTime.now());
+        passkey2Save.setPublicKey(securityManagerService.encrypt(passkey.getPublicKey()));
+        passkey2Save.setKeyHash(securityManagerService.hash(passkey2Save.getPublicKey() + passkey2Save.getCreatedAt().toString() + userInDB.getId()));
+
+        Set<UserPasskeyImpl> userPasskeySet = userInDB.getPasskeys();
+        userPasskeySet.add(passkey2Save);
+        userInDB.setPasskeys(userPasskeySet);
+        save(userInDB);
+
+        return userInDB;
     }
 }

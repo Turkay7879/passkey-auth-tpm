@@ -185,7 +185,7 @@ public class UserServiceImpl implements UserService {
         passkey2Save.setUser(userInDB);
         passkey2Save.setCreatedAt(LocalDateTime.now());
         passkey2Save.setPublicKey(securityManagerService.encrypt(passkey.getPublicKey()));
-        passkey2Save.setKeyHash(securityManagerService.hash(passkey2Save.getPublicKey() + passkey2Save.getCreatedAt().toString() + userInDB.getId()));
+        passkey2Save.setKeyAuth(securityManagerService.hash(passkey2Save.getPublicKey() + passkey2Save.getCreatedAt().toString() + userInDB.getId()));
 
         Set<UserPasskeyImpl> userPasskeySet = userInDB.getPasskeys();
         userPasskeySet.add(passkey2Save);

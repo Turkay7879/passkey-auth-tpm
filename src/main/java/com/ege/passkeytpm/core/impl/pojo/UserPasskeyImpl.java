@@ -21,22 +21,21 @@ public class UserPasskeyImpl {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Lob
-    @Column(name = "public_key", nullable = false)
+    @Column(name = "public_key", nullable = false, length = 1024)
     private String publicKey;
 
-    @Column(name = "key_hash", nullable = false)
-    private String keyHash;
+    @Column(name = "key_auth", nullable = false, length = 1024)
+    private String keyAuth;
 
     public UserPasskeyImpl() {
     }
 
-    public UserPasskeyImpl(Long dbId, UserImpl user, LocalDateTime createdAt, String publicKey, String keyHash) {
+    public UserPasskeyImpl(Long dbId, UserImpl user, LocalDateTime createdAt, String publicKey, String keyAuth) {
         this.dbId = dbId;
         this.user = user;
         this.createdAt = createdAt;
         this.publicKey = publicKey;
-        this.keyHash = keyHash;
+        this.keyAuth = keyAuth;
     }
 
     public Long getDbId() {
@@ -71,11 +70,11 @@ public class UserPasskeyImpl {
         this.publicKey = publicKey;
     }
 
-    public String getKeyHash() {
-        return keyHash;
+    public String getKeyAuth() {
+        return keyAuth;
     }
 
-    public void setKeyHash(String keyHash) {
-        this.keyHash = keyHash;
+    public void setKeyAuth(String keyHash) {
+        this.keyAuth = keyHash;
     }
 }

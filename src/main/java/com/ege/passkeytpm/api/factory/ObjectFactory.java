@@ -38,9 +38,12 @@ public final class ObjectFactory {
             if (StringUtils.hasText(userModel.getPassword())) {
                 user.setPassword(userModel.getPassword());
             }
-            if (userModel.getPasskeyToAdd() != null && !userModel.getPasskeyToAdd().isEmpty()) {
-                Set<UserPasskeyImpl> passkeyToAdd = new HashSet<>(userModel.getPasskeyToAdd());
+            if (userModel.getUserPasskeys() != null && !userModel.getUserPasskeys().isEmpty()) {
+                Set<UserPasskeyImpl> passkeyToAdd = new HashSet<>(userModel.getUserPasskeys());
                 user.setPasskeys(passkeyToAdd);
+            }
+            if (StringUtils.hasText(userModel.getEmail())) {
+                user.setMail(userModel.getEmail());
             }
         }
         return user;

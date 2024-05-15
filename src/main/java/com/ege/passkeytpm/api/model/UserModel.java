@@ -6,9 +6,12 @@ import java.util.List;
 
 public class UserModel {
     private String id;
+    private String email;
     private String username;
     private String password;
-    private List<UserPasskeyImpl> passkeyToAdd;
+    private String challenge;
+    private String digest;
+    private List<UserPasskeyImpl> userPasskeys;
 
     public UserModel() {
     }
@@ -19,6 +22,14 @@ public class UserModel {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getUsername() {
@@ -37,11 +48,27 @@ public class UserModel {
         this.password = password;
     }
 
-    public List<UserPasskeyImpl> getPasskeyToAdd() {
-        return passkeyToAdd;
+    public List<UserPasskeyImpl> getUserPasskeys() {
+        return userPasskeys;
     }
 
-    public void setPasskeyToAdd(List<UserPasskeyImpl> passkeyToAdd) {
-        this.passkeyToAdd = passkeyToAdd;
+    public void setUserPasskeys(List<UserPasskeyImpl> userPasskeys) {
+        this.userPasskeys = userPasskeys;
+    }
+
+    public String getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(String challenge) {
+        this.challenge = challenge;
+    }
+
+    public String getDigest() {
+        return digest;
+    }
+
+    public void setDigest(String digest) {
+        this.digest = digest;
     }
 }

@@ -6,7 +6,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
 import java.security.spec.KeySpec;
 import java.util.*;
 
@@ -194,5 +196,19 @@ public class SecurityManagerServiceImpl implements SecurityManagerService {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
+    }
+
+    @Override
+    public String generateNonce() {
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString();
+    }
+
+    @Override
+    public boolean verifySignature(PublicKey publicKey, byte[] data, byte[] digest) throws Exception {
+        Signature sig = Signature.getInstance("SHA256withRSA");
+        sig.initVerify(publicKey);
+        sig.update(data);
+        return sig.verify(digest);
     }
 }

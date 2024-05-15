@@ -63,4 +63,16 @@ public class UserAuthenticationRestApi {
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("/getChallenge")
+    public ResponseEntity<Object> getChallenge(@RequestBody UserModel model) {
+        try {
+            UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            String challenge = authenticationService.generateChallenge4User(bean);
+            return new ResponseEntity<>(challenge, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error with getting challenge", e);
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -1,13 +1,10 @@
 package com.ege.passkeytpm.core.impl.pojo;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "t_user")
@@ -34,6 +31,10 @@ public class UserImpl {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private Set<UserPasskeyImpl> passkeys;
 
     public UserImpl(Long dbId, String id, String userName, String mail, String password, String salt,
             LocalDateTime createdAt) {
@@ -104,5 +105,13 @@ public class UserImpl {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Set<UserPasskeyImpl> getPasskeys() {
+        return passkeys;
+    }
+
+    public void setPasskeys(Set<UserPasskeyImpl> passkeys) {
+        this.passkeys = passkeys;
     }
 }

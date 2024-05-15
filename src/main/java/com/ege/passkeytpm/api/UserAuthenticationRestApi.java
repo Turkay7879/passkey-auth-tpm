@@ -1,5 +1,7 @@
 package com.ege.passkeytpm.api;
 
+import com.ege.passkeytpm.api.factory.ObjectFactory;
+import com.ege.passkeytpm.api.model.UserModel;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ege.passkeytpm.core.api.AuthenticationService;
@@ -14,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.Objects;
 
 
 @RestController
@@ -42,9 +46,32 @@ public class UserAuthenticationRestApi {
     public ResponseEntity<String> login(@RequestBody UserImpl user) {
         try {
             String result = authenticationService.authUserWithPassword(user);
-            return new ResponseEntity<>(result, result == "OK" ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(result, Objects.equals(result, "OK") ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error with saving user", e);
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/addPasskey")
+    public ResponseEntity<Object> addPasskey(@RequestBody UserModel model) {
+        try {
+            UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            return new ResponseEntity<>(userService.assignPasskeyToUser(bean), HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error with saving user passkey", e);
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/getChallenge")
+    public ResponseEntity<Object> getChallenge(@RequestBody UserModel model) {
+        try {
+            UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            String challenge = authenticationService.generateChallenge4User(bean);
+            return new ResponseEntity<>(challenge, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error with getting challenge", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

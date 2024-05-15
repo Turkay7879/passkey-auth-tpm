@@ -10,4 +10,5 @@ public interface UserService {
     UserImpl searchUserById(String id);
     List<UserImpl> search(UserImpl user);
     List<UserImpl> search(UserImpl user, boolean strictCheck);
+    UserImpl assignPasskeyToUser(UserImpl user) throws Exception;
 }

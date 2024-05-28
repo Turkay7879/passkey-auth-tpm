@@ -12,6 +12,7 @@ public class UserModel {
     private String challenge;
     private String digest;
     private List<UserPasskeyImpl> userPasskeys;
+    private Boolean usePasskeyAuth;
 
     public UserModel() {
     }
@@ -70,5 +71,13 @@ public class UserModel {
 
     public void setDigest(String digest) {
         this.digest = digest;
+    }
+
+    public Boolean getUsePasskeyAuth() {
+        return usePasskeyAuth;
+    }
+
+    public void setUsePasskeyAuth(Boolean usePasskeyAuth) {
+        this.usePasskeyAuth = usePasskeyAuth;
     }
 }

@@ -1,6 +1,7 @@
 package com.ege.passkeytpm.api;
 
 import com.ege.passkeytpm.api.factory.ObjectFactory;
+import com.ege.passkeytpm.api.model.ChallengeResponseModel;
 import com.ege.passkeytpm.api.model.UserModel;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,9 +44,12 @@ public class UserAuthenticationRestApi {
     }
     
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserImpl user) {
+    public ResponseEntity<String> login(@RequestBody UserModel model) {
         try {
-            String result = authenticationService.authUserWithPassword(user);
+            UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            String result = model.getUsePasskeyAuth() != null && model.getUsePasskeyAuth()
+                    ? authenticationService.authUserWithPasskey(bean, model.getChallenge(), model.getDigest())
+                    : authenticationService.authUserWithPassword(bean);
             return new ResponseEntity<>(result, Objects.equals(result, "OK") ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error with saving user", e);
@@ -68,8 +72,8 @@ public class UserAuthenticationRestApi {
     public ResponseEntity<Object> getChallenge(@RequestBody UserModel model) {
         try {
             UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
-            String challenge = authenticationService.generateChallenge4User(bean);
-            return new ResponseEntity<>(challenge, HttpStatus.OK);
+            String data = authenticationService.generateChallenge4User(bean);
+            return new ResponseEntity<>(new ChallengeResponseModel(data.split("#")[0], data.split("#")[1]), HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Error with getting challenge", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

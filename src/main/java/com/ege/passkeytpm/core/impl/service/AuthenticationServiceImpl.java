@@ -68,22 +68,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public String authUserWithPasskey(UserImpl user, String data, String digest) throws Exception {
-        if (user == null || user.getPasskeys() == null || user.getPasskeys().isEmpty()) {
+        if (user == null || !StringUtils.hasText(data) || !StringUtils.hasText(digest)) {
             throw new MissingCredentialsException();
         }
 
         UserImpl user4Auth = getUser4Auth(user);
-        Set<UserPasskeyImpl> passkeysInDB = user4Auth.getPasskeys();
-        UserPasskeyImpl passkey4Auth;
+        List<UserPasskeyImpl> passkeysInDB = new ArrayList<>(user4Auth.getPasskeys());
+        UserPasskeyImpl passkey4Auth = passkeysInDB.get(0);
 
-        List<UserPasskeyImpl> passkeyList4Auth = passkeysInDB.stream().filter(pk -> pk.getPublicKey().equals(user.getPasskeys().stream().toList().get(0).getPublicKey().trim())).toList();
-        if (passkeyList4Auth.size() != 1) {
-            throw new IllegalArgumentException("Only 1 valid passkey can be used per authentication session!");
-        }
-        passkey4Auth = passkeyList4Auth.get(0);
-
-        PublicKey publicKey = ObjectFactory.getInstance().model2Bean(passkey4Auth.getPublicKey());
-        boolean authResult = securityManagerService.verifySignature(publicKey, data.getBytes(StandardCharsets.UTF_8), digest.getBytes(StandardCharsets.UTF_8));
+        PublicKey publicKey = ObjectFactory.getInstance().model2Bean(securityManagerService.decrypt(passkey4Auth.getPublicKey()));
+        byte[] signature = ObjectFactory.getInstance().hexString2ByteArray(digest);
+        boolean authResult = securityManagerService.verifySignature(publicKey, data.getBytes(StandardCharsets.UTF_8), signature);
 
         return authResult ? "OK" : "FAIL";
     }
@@ -95,10 +90,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         UserImpl user4Auth = getUser4Auth(user);
+
+        String keyAuth = securityManagerService.decrypt((new ArrayList<>(user4Auth.getPasskeys())).get(0).getKeyAuth());
         String challenge = securityManagerService.generateNonce();
         UserPasskeyAuthImpl authSession = new UserPasskeyAuthImpl(user4Auth, challenge);
         passkeyAuthRepository.save(authSession);
 
-        return challenge;
+        return challenge + "#" + keyAuth;
     }
 }

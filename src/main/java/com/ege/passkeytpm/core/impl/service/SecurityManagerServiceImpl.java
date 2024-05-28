@@ -130,26 +130,11 @@ public class SecurityManagerServiceImpl implements SecurityManagerService {
         ois.close();
         bais.close();
 
-        Object encData = dataMap.get("data");
-        Object iv = dataMap.get("iv");
-        if (encData == null || iv == null)
+        byte[] encDataBytes = (byte[]) dataMap.get("data");
+        byte[] ivBytes = (byte[]) dataMap.get("iv");
+
+        if (encDataBytes == null || ivBytes == null)
             throw new Exception("Invalid secret data! Cannot continue with decryption");
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-        oos.writeObject(encData);
-        oos.flush();
-        byte[] encDataBytes = baos.toByteArray();
-        baos.flush();
-
-        oos.writeObject(iv);
-        oos.flush();
-        byte[] ivBytes = baos.toByteArray();
-        baos.flush();
-
-        oos.close();
-        baos.close();
 
         SecretKey aes = new SecretKeySpec(SECRET_KEY, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
@@ -161,7 +146,7 @@ public class SecurityManagerServiceImpl implements SecurityManagerService {
         Arrays.fill(encDataBytes, (byte) 0);
         Arrays.fill(ivBytes, (byte) 0);
 
-        return new String(clearData);
+        return new String(clearData, StandardCharsets.UTF_8);
     }
 
     private byte[] charArr2ByteArr(char[] charArr) {

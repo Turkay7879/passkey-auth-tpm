@@ -159,16 +159,16 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserImpl assignPasskeyToUser(UserImpl user) throws Exception {
-        if (user == null || !StringUtils.hasText(user.getId())) {
-            throw new IllegalArgumentException("User to assign passkey cannot be null or have empty id!");
+        if (user == null || !StringUtils.hasText(user.getMail())) {
+            throw new IllegalArgumentException("User to assign passkey cannot be null or have empty mail!");
         }
 
         UserImpl userInDB = new UserImpl();
-        userInDB.setId(user.getId());
+        userInDB.setMail(user.getMail());
         List<UserImpl> result = search(userInDB, true);
 
         if (result.isEmpty()) {
-            throw new IllegalArgumentException("No user found with id %s!".formatted(user.getId()));
+            throw new IllegalArgumentException("No user found with mail %s!".formatted(user.getMail()));
         }
 
         Set<UserPasskeyImpl> userPasskeys = user.getPasskeys();
@@ -184,8 +184,8 @@ public class UserServiceImpl implements UserService {
         UserPasskeyImpl passkey2Save = new UserPasskeyImpl();
         passkey2Save.setUser(userInDB);
         passkey2Save.setCreatedAt(LocalDateTime.now());
-        passkey2Save.setPublicKey(securityManagerService.encrypt(passkey.getPublicKey()));
-        passkey2Save.setKeyAuth(securityManagerService.hash(passkey2Save.getPublicKey() + passkey2Save.getCreatedAt().toString() + userInDB.getId()));
+        passkey2Save.setPublicKey(securityManagerService.encrypt(passkey.getPublicKey().split("#")[0]));
+        passkey2Save.setKeyAuth(securityManagerService.encrypt(passkey.getPublicKey().split("#")[1]));
 
         Set<UserPasskeyImpl> userPasskeySet = userInDB.getPasskeys();
         userPasskeySet.add(passkey2Save);

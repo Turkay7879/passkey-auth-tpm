@@ -10,5 +10,5 @@ import java.util.List;
 public interface UserSessionRepository extends JpaRepository<UserSessionImpl, Long> {
     List<UserSessionImpl> findByExpiresAtBeforeAndIsValidTrue(LocalDateTime time);
     UserSessionImpl findBySessionId(String sessionId);
-    List<UserSessionImpl> findByUserAndExpiresAtBeforeAndIsValidTrue(UserImpl user, LocalDateTime time);
+    List<UserSessionImpl> findByUserAndExpiresAtAfterAndIsValidTrue(UserImpl user, LocalDateTime time);
 }

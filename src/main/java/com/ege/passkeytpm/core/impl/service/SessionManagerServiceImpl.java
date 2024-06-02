@@ -78,7 +78,7 @@ public class SessionManagerServiceImpl implements SessionManagerService {
 
         UserImpl user = userList.get(0);
         LocalDateTime now = LocalDateTime.now();
-        List<UserSessionImpl> sessionList = sessionRepository.findByUserAndExpiresAtBeforeAndIsValidTrue(user, now);
+        List<UserSessionImpl> sessionList = sessionRepository.findByUserAndExpiresAtAfterAndIsValidTrue(user, now);
         if (sessionList == null || sessionList.size() != 1) {
             throw new MissingSessionException();
         }

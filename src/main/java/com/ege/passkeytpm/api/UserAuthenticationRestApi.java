@@ -58,7 +58,7 @@ public class UserAuthenticationRestApi {
                     : authenticationService.authUserWithPassword(bean);
             return new ResponseEntity<>(result, Objects.equals(result, "OK") ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
         } catch (SessionAlreadyExistsException e) {
-            return new ResponseEntity<>("User already has an active session!", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("User already has an active session!", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             logger.error("Error with saving user", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -85,13 +85,8 @@ public class UserAuthenticationRestApi {
     public ResponseEntity<Object> getChallenge(@RequestBody UserModel model) {
         try {
             UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
-            if (sessionManagerService.findSessionOfUser(bean) == null) {
-                throw new MissingSessionException();
-            }
             String data = authenticationService.generateChallenge4User(bean);
             return new ResponseEntity<>(new ChallengeResponseModel(data.split("#")[0], data.split("#")[1]), HttpStatus.OK);
-        } catch (MissingSessionException e) {
-            return new ResponseEntity<>("Login is required for this operation!", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error with getting challenge", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

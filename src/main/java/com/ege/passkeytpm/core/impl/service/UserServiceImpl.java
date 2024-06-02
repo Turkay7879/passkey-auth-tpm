@@ -179,6 +179,10 @@ public class UserServiceImpl implements UserService {
         }
 
         userInDB = result.get(0);
+        if (userInDB.getPasskeys() != null && !userInDB.getPasskeys().isEmpty()) {
+            throw new Exception("User already has a passkey registered to account!");
+        }
+
         UserPasskeyImpl passkey = userPasskeys.iterator().next();
 
         UserPasskeyImpl passkey2Save = new UserPasskeyImpl();

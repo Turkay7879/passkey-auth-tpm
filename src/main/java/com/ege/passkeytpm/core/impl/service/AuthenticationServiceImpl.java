@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.ege.passkeytpm.core.api.SessionManagerService;
 import com.ege.passkeytpm.core.api.exception.MissingCredentialsException;
+import com.ege.passkeytpm.core.api.exception.NoPasskeyRegisteredException;
 import com.ege.passkeytpm.core.api.exception.SessionAlreadyExistsException;
 import com.ege.passkeytpm.core.impl.pojo.UserPasskeyAuthImpl;
 import com.ege.passkeytpm.core.impl.pojo.UserPasskeyImpl;
@@ -75,7 +76,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         char[] password = user.getPassword().toCharArray();
         boolean result = securityManagerService.verifyPassword(user4Auth.getPassword(), user4Auth.getSalt(), password);
         LocalDateTime now = LocalDateTime.now();
-        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtBeforeAndIsValidTrue(user4Auth, now);
+        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtAfterAndIsValidTrue(user4Auth, now);
         if (result && existingSessions != null && !existingSessions.isEmpty()) {
             throw new SessionAlreadyExistsException();
         } else if (result) {
@@ -98,7 +99,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         byte[] signature = ObjectFactory.getInstance().hexString2ByteArray(digest);
         boolean authResult = securityManagerService.verifySignature(publicKey, data.getBytes(StandardCharsets.UTF_8), signature);
         LocalDateTime now = LocalDateTime.now();
-        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtBeforeAndIsValidTrue(user4Auth, now);
+        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtAfterAndIsValidTrue(user4Auth, now);
         if (authResult && existingSessions != null && !existingSessions.isEmpty()) {
             throw new SessionAlreadyExistsException();
         } else if (authResult) {
@@ -114,6 +115,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         UserImpl user4Auth = getUser4Auth(user);
+        if (user4Auth.getPasskeys() == null || user4Auth.getPasskeys().isEmpty()) {
+            throw new NoPasskeyRegisteredException();
+        }
 
         String keyAuth = securityManagerService.decrypt((new ArrayList<>(user4Auth.getPasskeys())).get(0).getKeyAuth());
         String challenge = securityManagerService.generateNonce();

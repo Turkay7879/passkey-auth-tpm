@@ -20,7 +20,7 @@ public class PasskeyAuthSessionExpireJob implements Job {
     @Autowired
     private UserPasskeyAuthRepository authRepository;
 
-    private final Logger logger = LoggerFactory.getLogger(PasskeyAuthSessionExpireJob.class);
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @PostConstruct
     public void init() {

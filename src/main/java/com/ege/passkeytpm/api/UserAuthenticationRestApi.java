@@ -3,6 +3,9 @@ package com.ege.passkeytpm.api;
 import com.ege.passkeytpm.api.factory.ObjectFactory;
 import com.ege.passkeytpm.api.model.ChallengeResponseModel;
 import com.ege.passkeytpm.api.model.UserModel;
+import com.ege.passkeytpm.core.api.SessionManagerService;
+import com.ege.passkeytpm.core.api.exception.MissingSessionException;
+import com.ege.passkeytpm.core.api.exception.SessionAlreadyExistsException;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ege.passkeytpm.core.api.AuthenticationService;
@@ -31,6 +34,9 @@ public class UserAuthenticationRestApi {
 
     @Autowired
     private AuthenticationService authenticationService;
+
+    @Autowired
+    private SessionManagerService sessionManagerService;
     
     @PostMapping("/registerUser")
     public ResponseEntity<Object> registerUser(@RequestBody UserImpl user) {
@@ -51,6 +57,8 @@ public class UserAuthenticationRestApi {
                     ? authenticationService.authUserWithPasskey(bean, model.getChallenge(), model.getDigest())
                     : authenticationService.authUserWithPassword(bean);
             return new ResponseEntity<>(result, Objects.equals(result, "OK") ? HttpStatus.OK : HttpStatus.UNAUTHORIZED);
+        } catch (SessionAlreadyExistsException e) {
+            return new ResponseEntity<>("User already has an active session!", HttpStatus.EXPECTATION_FAILED);
         } catch (Exception e) {
             logger.error("Error with saving user", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -61,7 +69,12 @@ public class UserAuthenticationRestApi {
     public ResponseEntity<Object> addPasskey(@RequestBody UserModel model) {
         try {
             UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            if (sessionManagerService.findSessionOfUser(bean) == null) {
+                throw new MissingSessionException();
+            }
             return new ResponseEntity<>(userService.assignPasskeyToUser(bean), HttpStatus.OK);
+        } catch (MissingSessionException e) {
+            return new ResponseEntity<>("Login is required for this operation!", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error with saving user passkey", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -72,8 +85,13 @@ public class UserAuthenticationRestApi {
     public ResponseEntity<Object> getChallenge(@RequestBody UserModel model) {
         try {
             UserImpl bean = ObjectFactory.getInstance().model2Bean(model);
+            if (sessionManagerService.findSessionOfUser(bean) == null) {
+                throw new MissingSessionException();
+            }
             String data = authenticationService.generateChallenge4User(bean);
             return new ResponseEntity<>(new ChallengeResponseModel(data.split("#")[0], data.split("#")[1]), HttpStatus.OK);
+        } catch (MissingSessionException e) {
+            return new ResponseEntity<>("Login is required for this operation!", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error with getting challenge", e);
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

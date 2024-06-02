@@ -2,16 +2,21 @@ package com.ege.passkeytpm.core.impl.service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.ege.passkeytpm.core.api.SessionManagerService;
 import com.ege.passkeytpm.core.api.exception.MissingCredentialsException;
+import com.ege.passkeytpm.core.api.exception.SessionAlreadyExistsException;
 import com.ege.passkeytpm.core.impl.pojo.UserPasskeyAuthImpl;
 import com.ege.passkeytpm.core.impl.pojo.UserPasskeyImpl;
+import com.ege.passkeytpm.core.impl.pojo.UserSessionImpl;
 import com.ege.passkeytpm.core.impl.util.ObjectFactory;
 import com.ege.passkeytpm.core.repository.UserPasskeyAuthRepository;
+import com.ege.passkeytpm.core.repository.UserSessionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +37,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private UserService userService;
 
     @Autowired
+    private SessionManagerService sessionManagerService;
+
+    @Autowired
     private UserPasskeyAuthRepository passkeyAuthRepository;
+
+    @Autowired
+    private UserSessionRepository sessionRepository;
 
     private final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
@@ -63,6 +74,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserImpl user4Auth = getUser4Auth(user);
         char[] password = user.getPassword().toCharArray();
         boolean result = securityManagerService.verifyPassword(user4Auth.getPassword(), user4Auth.getSalt(), password);
+        LocalDateTime now = LocalDateTime.now();
+        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtBeforeAndIsValidTrue(user4Auth, now);
+        if (result && existingSessions != null && !existingSessions.isEmpty()) {
+            throw new SessionAlreadyExistsException();
+        } else if (result) {
+            sessionManagerService.createSession(user4Auth);
+        }
         return result ? "OK" : "FAIL";
     }
 
@@ -79,7 +97,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         PublicKey publicKey = ObjectFactory.getInstance().model2Bean(securityManagerService.decrypt(passkey4Auth.getPublicKey()));
         byte[] signature = ObjectFactory.getInstance().hexString2ByteArray(digest);
         boolean authResult = securityManagerService.verifySignature(publicKey, data.getBytes(StandardCharsets.UTF_8), signature);
-
+        LocalDateTime now = LocalDateTime.now();
+        List<UserSessionImpl> existingSessions = sessionRepository.findByUserAndExpiresAtBeforeAndIsValidTrue(user4Auth, now);
+        if (authResult && existingSessions != null && !existingSessions.isEmpty()) {
+            throw new SessionAlreadyExistsException();
+        } else if (authResult) {
+            sessionManagerService.createSession(user4Auth);
+        }
         return authResult ? "OK" : "FAIL";
     }
 
